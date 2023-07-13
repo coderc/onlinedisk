@@ -1,4 +1,0 @@
-version: 1
-server:
-  httpPort: 8080
-  logInfo: true

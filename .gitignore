@@ -20,5 +20,12 @@
 # Go workspace file
 go.work
 
-log/
+logs/
 test_data
+
+__debug_bin
+
+config/
+
+.idea/
+github_token.txt
