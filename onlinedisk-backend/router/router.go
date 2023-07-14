@@ -10,6 +10,19 @@ import (
 func SetupRouter(r *gin.Engine) {
 	r.Static("/static", "./static")
 
-	fileController := r.Group("/file")
-	fileController.POST("/upload", handler.UploadFileHandler)
+	apiRouter := r.Group("/api")
+
+	v1Router := apiRouter.Group("/v1")
+	{
+		fileRouter := v1Router.Group("/file")
+		{
+			fileRouter.POST("/upload", handler.UploadFileHandler)
+		}
+
+		userRouter := v1Router.Group("/user")
+		{
+			userRouter.POST("/signup", handler.SignupHandler)
+			userRouter.POST("/signin", handler.SigninHandler)
+		}
+	}
 }
