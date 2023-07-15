@@ -2,6 +2,7 @@ package router
 
 import (
 	"onlinedisk-backend/handler"
+	"onlinedisk-backend/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,6 +16,7 @@ func SetupRouter(r *gin.Engine) {
 	v1Router := apiRouter.Group("/v1")
 	{
 		fileRouter := v1Router.Group("/file")
+		fileRouter.Use(middleware.Jwt())
 		{
 			fileRouter.POST("/upload", handler.UploadFileHandler)
 		}

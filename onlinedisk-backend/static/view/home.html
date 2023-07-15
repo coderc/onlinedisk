@@ -14,6 +14,10 @@
     <h4>create_time:&nbsp;<span id="create_time"></span></h4>
     <h4>update_time:&nbsp;<span id="update_time"></span></h4>
 
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" name="file">
+        <input type="submit" value="Upload">
+    </form>
     <script>
         let userModel = {}
         let token = ""
@@ -27,7 +31,35 @@
             $('#create_time').text(userModel.create_time)
             $('#update_time').text(userModel.update_time)
         }
-        onOpen()
+
+        $(document).ready(function() {
+            onOpen()
+
+            // 监听表单提交事件
+        $('#uploadForm').submit(function(event) {
+            event.preventDefault(); // 阻止表单默认提交行为
+
+            var formData = new FormData($(this)[0]); // 创建FormData对象
+            $.ajax({
+                url: '/api/v1/file/upload', // 后端处理上传的URL
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader('token', token); // 添加令牌到请求头中
+                },
+                success: function(response) {
+                    // 文件上传成功后的处理
+                    console.log('File uploaded successfully.');
+                },
+                error: function(xhr, status, error) {
+                    // 文件上传失败时的处理
+                    console.log('File upload failed: ' + error);
+                }
+            });
+        });
+        })
     </script>
 </body>
 </html>
