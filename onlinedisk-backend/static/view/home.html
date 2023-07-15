@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>home</title>
-    <!-- // 引入jquery -->
+    <!-- 引入jquery -->
     <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.js"></script>
+
+    <!-- 引入index.css -->
+    <link rel="stylesheet" href="/static/css/index.css">
 </head>
 <body>
     <h2>home</h2>
@@ -18,9 +21,25 @@
         <input type="file" name="file">
         <input type="submit" value="Upload">
     </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>文件名</th>
+                <th>文件大小</th>
+                <th>上传时间</th>
+                <th>修改时间</th>
+                <th>下载</th>
+                <th>删除</th>
+            </tr>
+        </thead>
+        <tbody id="fileList">
+        </tbody>
+    </table>
     <script>
         let userModel = {}
         let token = ""
+        let isUploading = false
         function onOpen() {
             userModel = JSON.parse(localStorage.getItem("userModel"))
             token = localStorage.getItem("token")
@@ -30,35 +49,119 @@
             $('#username').text(userModel.username)
             $('#create_time').text(userModel.create_time)
             $('#update_time').text(userModel.update_time)
+
+            // 获取文件列表
+            getFileList()
         }
+
+        function getFileList() {
+            $.ajax({
+                url: "/api/v1/file/list",
+                type: "GET",
+                headers: {
+                    "token": token
+                },
+                success(res) {
+                    console.log(res)
+                    if (res.code == 0) {
+                        let fileList = res.data
+                        let html = ""
+                        for (let i = 0; i < fileList.length; i++) {
+                            let fileItem = fileList[i]
+                            html += "<tr>"
+                            html += "<td>" + fileItem.name + "</td>"
+                            html += "<td>" + fileItem.size + "</td>"
+                            html += "<td>" + fileItem.create_time + "</td>"
+                            html += "<td>" + fileItem.update_time + "</td>"
+                            html += "<td><a href='/api/v1/file/download?fileId=" + fileItem.fileId + "'>下载</a></td>"
+                            html += "<td><a href='javascript:void(0)' onclick='deleteFile(\"" + fileList[i].fileId + "\")'>删除</a></td>"
+                            html += "</tr>"
+                        }
+                        $('#fileList').html(html)
+                    } else {
+                        alert(res.msg)
+                    }
+                },
+            })
+        }
+
+        // 计算文件sha1
+        function calculateFileHash(file, callback) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const arrayBuffer = event.target.result;
+                crypto.subtle.digest('SHA-1', arrayBuffer)
+                .then(hashBuffer => {
+                    const hashArray = Array.from(new Uint8Array(hashBuffer));
+                    const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+                    callback(null, hashHex); // 通过回调函数返回SHA-1字符串
+                })
+                .catch(error => callback(error));
+            };
+            reader.onerror = function() {
+                callback(new Error('Failed to read file.'));
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
 
         $(document).ready(function() {
             onOpen()
 
             // 监听表单提交事件
-        $('#uploadForm').submit(function(event) {
-            event.preventDefault(); // 阻止表单默认提交行为
-
-            var formData = new FormData($(this)[0]); // 创建FormData对象
-            $.ajax({
-                url: '/api/v1/file/upload', // 后端处理上传的URL
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                beforeSend: function(xhr) {
-                    xhr.setRequestHeader('token', token); // 添加令牌到请求头中
-                },
-                success: function(response) {
-                    // 文件上传成功后的处理
-                    console.log('File uploaded successfully.');
-                },
-                error: function(xhr, status, error) {
-                    // 文件上传失败时的处理
-                    console.log('File upload failed: ' + error);
+            $('#uploadForm').submit(function(event) {
+                event.preventDefault(); // 阻止表单默认提交行为
+                if (isUploading) {
+                    alert('文件正在上传中...')
+                    return
                 }
+
+                var formData = new FormData($(this)[0]); // 创建FormData对象
+
+                const fileInput = document.querySelector('input[type="file"]');
+                const file = fileInput.files[0];
+                const fileName = file.name;
+                // 等待reader读取file计算sha1后调用此回调函数
+                calculateFileHash(file, (error, fileSHA1) => {
+                    if (error) {
+                        console.error('Error calculating file hash:', error);
+                        return;
+                    }
+
+                    console.log('File hash:', fileSHA1)
+                    isUploading = true
+                    $.ajax({
+                        url: '/api/v1/file/upload', // 后端处理上传的URL
+                        type: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        beforeSend: function(xhr) {
+                            xhr.setRequestHeader('token', token); // 添加令牌到请求头中
+                            xhr.setRequestHeader('sha1', fileSHA1); // 添加sha1到请求头中
+                            xhr.setRequestHeader('filename', encodeURIComponent(fileName)); // 添加文件名到请求头中
+                        },
+                        success(response) {
+                            isUploading = false
+                            alert('上传成功')
+                            // 文件上传成功后的处理
+                            console.log('File uploaded successfully.');
+
+                            location.reload();
+                        },
+                        error(xhr, status, error) {
+                            isUploading = false
+                            alert('上传失败')
+                            // 文件上传失败时的处理
+                            console.log('File upload failed: ' + error);
+
+                            location.reload();
+                        }
+                    });
+                });
+
+                
             });
-        });
         })
     </script>
 </body>

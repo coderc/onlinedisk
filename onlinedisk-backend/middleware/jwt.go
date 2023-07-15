@@ -27,5 +27,6 @@ func Jwt() gin.HandlerFunc {
 		}
 		c.Set("uuid", uuid)
 		c.Next()
+		return
 	}
 }

@@ -28,18 +28,18 @@ func SigninHandler(c *gin.Context) {
 	var userInfo requestInfo.RequestUserInfo
 	if err := c.BindJSON(&userInfo); err != nil {
 		logger.GetLogger().Warn(errorGetUserInfo, zap.Error(err))
-		resp.BuildResponse(c, http.StatusBadRequest, resp.SigninFailedCode, nil)
+		resp.SendResponse(c, http.StatusBadRequest, resp.SigninFailedCode, nil)
 		return
 	}
 
 	// 获取加密后的密码
-	userInfo.Password = utils.EncryptStr(userInfo.Password)
+	userInfo.Password = utils.EncryptStrMD5(userInfo.Password)
 
 	// 获取用户信息
-	userModel, err := mapper.GetUser(userInfo.Username, userInfo.Password)
+	userModel, err := mapper.QueryUser(userInfo.Username, userInfo.Password)
 	if err != nil {
 		logger.GetLogger().Warn(err.Error(), zap.String("username", userInfo.Username))
-		resp.BuildResponse(c, http.StatusBadRequest, resp.SigninFailedCode, nil)
+		resp.SendResponse(c, http.StatusBadRequest, resp.SigninFailedCode, nil)
 		return
 	}
 
@@ -47,13 +47,13 @@ func SigninHandler(c *gin.Context) {
 	token, err := jwt.CreateToken(userModel.UUID, time.Now().Add(24*60*60*time.Second).Unix())
 	if err != nil {
 		logger.GetLogger().Error(err.Error(), zap.String("username", userInfo.Username))
-		resp.BuildResponse(c, http.StatusInternalServerError, resp.SigninFailedCode, nil)
+		resp.SendResponse(c, http.StatusInternalServerError, resp.SigninFailedCode, nil)
 		return
 	}
 
 	// 返回token
 	logger.GetLogger().Debug("signin success", zap.String("username", userInfo.Username))
-	resp.BuildResponse(c, http.StatusOK, resp.SuccessCode, gin.H{
+	resp.SendResponse(c, http.StatusOK, resp.SuccessCode, gin.H{
 		"token":     token,
 		"userModel": userModel,
 	})
@@ -63,43 +63,43 @@ func SignupHandler(c *gin.Context) {
 	var userInfo requestInfo.RequestUserInfo
 	if err := c.BindJSON(&userInfo); err != nil {
 		logger.GetLogger().Warn(errorGetUserInfo, zap.Error(err))
-		resp.BuildResponse(c, http.StatusBadRequest, resp.SignupFailedCode, nil)
+		resp.SendResponse(c, http.StatusBadRequest, resp.SignupFailedCode, nil)
 		return
 	}
 
 	// 判断用户名是否合法
 	if ok := checkUsername(userInfo.Username); !ok {
 		logger.GetLogger().Warn(errorUsernameInvalid, zap.String("username", userInfo.Username))
-		resp.BuildResponse(c, http.StatusBadRequest, resp.SignupFailedCode, nil)
+		resp.SendResponse(c, http.StatusBadRequest, resp.SignupFailedCode, nil)
 		return
 	}
 
 	// 判断密码是否合法
 	if ok := checkPasswordInSignup(userInfo.Password, userInfo.ConfirmPassword); !ok {
 		logger.GetLogger().Warn(errorPasswordInvalidInSignup, zap.String("password", userInfo.Password), zap.String("confirmPassword", userInfo.ConfirmPassword))
-		resp.BuildResponse(c, http.StatusBadRequest, resp.SignupFailedCode, nil)
+		resp.SendResponse(c, http.StatusBadRequest, resp.SignupFailedCode, nil)
 		return
 	}
 
 	// 对密码进行加密
-	userInfo.Password = utils.EncryptStr(userInfo.Password)
+	userInfo.Password = utils.EncryptStrMD5(userInfo.Password)
 
 	// 生成 uuid
 	uuid, err := snowflake.GetId(1, 1)
 	if err != nil {
 		logger.GetLogger().Error(errorCreateUUIDFailed, zap.Error(err))
-		resp.BuildResponse(c, http.StatusInternalServerError, resp.SignupFailedCode, nil)
+		resp.SendResponse(c, http.StatusInternalServerError, resp.SignupFailedCode, nil)
 		return
 	}
 
 	// 保存用户信息
-	err = mapper.InsertUserInfo(uuid, userInfo.Username, userInfo.Password)
+	err = mapper.InsertUser(uuid, userInfo.Username, userInfo.Password)
 	if err != nil {
 		logger.GetLogger().Error(errorInsertUserInfoFailed, zap.Error(err))
-		resp.BuildResponse(c, http.StatusInternalServerError, resp.SignupFailedCode, nil)
+		resp.SendResponse(c, http.StatusInternalServerError, resp.SignupFailedCode, nil)
 		return
 	}
-	resp.BuildResponse(c, http.StatusOK, resp.SuccessCode, gin.H{
+	resp.SendResponse(c, http.StatusOK, resp.SuccessCode, gin.H{
 		"message": "注册成功",
 	})
 }

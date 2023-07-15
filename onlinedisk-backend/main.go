@@ -18,7 +18,7 @@ func Init() {
 
 func main() {
 	Init()
-	r := gin.New()
+	r := gin.Default()
 	router.SetupRouter(r)
 
 	err := r.Run(fmt.Sprintf(":%d", config.GetConfig().ServerConfig.Port))
