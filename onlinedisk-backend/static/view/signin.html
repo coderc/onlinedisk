@@ -3,39 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>sign up</title>
+    <title>sign in</title>
     <!-- // 引入jquery -->
     <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.js"></script>
 </head>
 <body>
-    <form action="/api/v1/user/signup" method="post">
+    <form action="/api/v1/user/signin" method="post">
         <input type="text" name="username" placeholder="username"><br/>
         <input type="password" name="password" placeholder="password"><br/>
-        <input type="password" name="confirmpassword" placeholder="password2"><br/>
         <!-- // 触发函数的点击按钮 -->
-        <input type="button" value="signup" onclick="signup()">
+        <input type="button" value="signin" onclick="signin()">
     </form>
-    <a href="/static/view/signin.html">sign in</a>
+    <a href="/static/view/signup.html">sign up</a>
 
     <script>
-        function signup() {
+        function signin() {
             data = JSON.stringify({
                 username: $('input[name="username"]').val(),
                 password: $('input[name="password"]').val(),
-                confirm_password: $('input[name="confirmpassword"]').val()
             })
             console.log(data)
             $.ajax({
-                url: '/api/v1/user/signup',
+                url: '/api/v1/user/signin',
                 type: 'POST',
                 contentType: 'application/json',
                 data: data,
                 success(res) {
-                    alert('注册成功...\n即将跳转到登录页面...')
-                    window.location.href = '/static/view/signin.html'
+                    alert('登录成功...\n即将跳转到home页面...')
+                    console.log(res)
+                    localStorage.setItem('userModel', JSON.stringify(res.data.userModel))
+                    localStorage.setItem('token', res.data.token)
+                    window.location.href = '/static/view/home.html'
                 },
                 error(res) {
-                    alert('注册失败...')
+                    alert('登录失败...')
                 }
             })
         }

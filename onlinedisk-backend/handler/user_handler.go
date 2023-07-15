@@ -52,8 +52,10 @@ func SigninHandler(c *gin.Context) {
 	}
 
 	// 返回token
+	logger.GetLogger().Debug("signin success", zap.String("username", userInfo.Username))
 	resp.BuildResponse(c, http.StatusOK, resp.SuccessCode, gin.H{
-		"token": token,
+		"token":     token,
+		"userModel": userModel,
 	})
 }
 

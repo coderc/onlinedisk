@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>home</title>
+    <!-- // 引入jquery -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.js"></script>
+</head>
+<body>
+    <h2>home</h2>
+    <!-- 展示用户信息 table -->
+    <h4>username:&nbsp;<span id="username"></span></h4>
+    <h4>create_time:&nbsp;<span id="create_time"></span></h4>
+    <h4>update_time:&nbsp;<span id="update_time"></span></h4>
+
+    <script>
+        let userModel = {}
+        let token = ""
+        function onOpen() {
+            userModel = JSON.parse(localStorage.getItem("userModel"))
+            token = localStorage.getItem("token")
+            console.log(userModel)
+            console.log(token)
+
+            $('#username').text(userModel.username)
+            $('#create_time').text(userModel.create_time)
+            $('#update_time').text(userModel.update_time)
+        }
+        onOpen()
+    </script>
+</body>
+</html>

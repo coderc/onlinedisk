@@ -7,8 +7,8 @@ github.com/bytedance/sonic v1.9.2/go.mod h1:i736AoUSYt75HyZLoJW9ERYxcy6eaN6h4BZX
 github.com/chenzhuoyu/base64x v0.0.0-20211019084208-fb5309c8db06/go.mod h1:DH46F32mSOjUmXrMHnKwZdA8wcEefY7UVqBKYGjpdQY=
 github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 h1:qSGYFH7+jGhDF8vLC+iwCD4WpbV1EBDSzWkJODFLams=
 github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311/go.mod h1:b583jCggY9gE99b6G5LEC39OIiVsWj+R97kbl5odCEk=
-github.com/coderc/onlinedisk-util v0.1.3 h1:YAAtBYFu7RQfSQL/Aqrxy8bgzk/8ogUr9CqY+ZWV/6Y=
-github.com/coderc/onlinedisk-util v0.1.3/go.mod h1:ZTqByGEwXb0BpPtyclOnnuCVUHkPxl1czrvqJJGmVYg=
+github.com/coderc/onlinedisk-util v0.1.5 h1:Km7pvLGwsNw4z4eZrGOsiLIwL9yUMBwKoB9a1SAu4mQ=
+github.com/coderc/onlinedisk-util v0.1.5/go.mod h1:ZTqByGEwXb0BpPtyclOnnuCVUHkPxl1czrvqJJGmVYg=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

@@ -2,8 +2,10 @@ module onlinedisk-backend
 
 go 1.19
 
+// replace github.com/coderc/onlinedisk-util => ../../onlinedisk-util/
+
 require (
-	github.com/coderc/onlinedisk-util v0.1.3
+	github.com/coderc/onlinedisk-util v0.1.5
 	github.com/gin-gonic/gin v1.9.1
 	go.uber.org/zap v1.24.0
 )
