@@ -27,7 +27,7 @@ const (
 func SigninHandler(c *gin.Context) {
 	var userInfo requestInfo.RequestUserInfo
 	if err := c.BindJSON(&userInfo); err != nil {
-		logger.GetLogger().Warn(errorGetUserInfo, zap.Error(err))
+		logger.Zap().Warn(errorGetUserInfo, zap.Error(err))
 		resp.SendResponse(c, http.StatusBadRequest, resp.SigninFailedCode, nil)
 		return
 	}
@@ -38,7 +38,7 @@ func SigninHandler(c *gin.Context) {
 	// 获取用户信息
 	userModel, err := mapper.QueryUser(userInfo.Username, userInfo.Password)
 	if err != nil {
-		logger.GetLogger().Warn(err.Error(), zap.String("username", userInfo.Username))
+		logger.Zap().Warn(err.Error(), zap.String("username", userInfo.Username))
 		resp.SendResponse(c, http.StatusBadRequest, resp.SigninFailedCode, nil)
 		return
 	}
@@ -46,13 +46,13 @@ func SigninHandler(c *gin.Context) {
 	// 生成token
 	token, err := jwt.CreateToken(userModel.UUID, time.Now().Add(24*60*60*time.Second).Unix())
 	if err != nil {
-		logger.GetLogger().Error(err.Error(), zap.String("username", userInfo.Username))
+		logger.Zap().Error(err.Error(), zap.String("username", userInfo.Username))
 		resp.SendResponse(c, http.StatusInternalServerError, resp.SigninFailedCode, nil)
 		return
 	}
 
 	// 返回token
-	logger.GetLogger().Debug("signin success", zap.String("username", userInfo.Username))
+	logger.Zap().Debug("signin success", zap.String("username", userInfo.Username))
 	resp.SendResponse(c, http.StatusOK, resp.SuccessCode, gin.H{
 		"token":     token,
 		"userModel": userModel,
@@ -62,21 +62,21 @@ func SigninHandler(c *gin.Context) {
 func SignupHandler(c *gin.Context) {
 	var userInfo requestInfo.RequestUserInfo
 	if err := c.BindJSON(&userInfo); err != nil {
-		logger.GetLogger().Warn(errorGetUserInfo, zap.Error(err))
+		logger.Zap().Warn(errorGetUserInfo, zap.Error(err))
 		resp.SendResponse(c, http.StatusBadRequest, resp.SignupFailedCode, nil)
 		return
 	}
 
 	// 判断用户名是否合法
 	if ok := checkUsername(userInfo.Username); !ok {
-		logger.GetLogger().Warn(errorUsernameInvalid, zap.String("username", userInfo.Username))
+		logger.Zap().Warn(errorUsernameInvalid, zap.String("username", userInfo.Username))
 		resp.SendResponse(c, http.StatusBadRequest, resp.SignupFailedCode, nil)
 		return
 	}
 
 	// 判断密码是否合法
 	if ok := checkPasswordInSignup(userInfo.Password, userInfo.ConfirmPassword); !ok {
-		logger.GetLogger().Warn(errorPasswordInvalidInSignup, zap.String("password", userInfo.Password), zap.String("confirmPassword", userInfo.ConfirmPassword))
+		logger.Zap().Warn(errorPasswordInvalidInSignup, zap.String("password", userInfo.Password), zap.String("confirmPassword", userInfo.ConfirmPassword))
 		resp.SendResponse(c, http.StatusBadRequest, resp.SignupFailedCode, nil)
 		return
 	}
@@ -87,7 +87,7 @@ func SignupHandler(c *gin.Context) {
 	// 生成 uuid
 	uuid, err := snowflake.GetId(1, 1)
 	if err != nil {
-		logger.GetLogger().Error(errorCreateUUIDFailed, zap.Error(err))
+		logger.Zap().Error(errorCreateUUIDFailed, zap.Error(err))
 		resp.SendResponse(c, http.StatusInternalServerError, resp.SignupFailedCode, nil)
 		return
 	}
@@ -95,7 +95,7 @@ func SignupHandler(c *gin.Context) {
 	// 保存用户信息
 	err = mapper.InsertUser(uuid, userInfo.Username, userInfo.Password)
 	if err != nil {
-		logger.GetLogger().Error(errorInsertUserInfoFailed, zap.Error(err))
+		logger.Zap().Error(errorInsertUserInfoFailed, zap.Error(err))
 		resp.SendResponse(c, http.StatusInternalServerError, resp.SignupFailedCode, nil)
 		return
 	}

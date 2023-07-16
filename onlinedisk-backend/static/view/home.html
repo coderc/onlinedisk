@@ -132,9 +132,9 @@
                     console.log('File hash:', fileSHA1)
                     isUploading = true
                     $.ajax({
-                        url: '/api/v1/file/upload', // 后端处理上传的URL
+                        url: '/api/v1/file/chunk', // 后端处理上传的URL
                         type: 'POST',
-                        data: formData,
+                        // data: formData,
                         processData: false,
                         contentType: false,
                         beforeSend: function(xhr) {
@@ -143,22 +143,47 @@
                             xhr.setRequestHeader('filename', encodeURIComponent(fileName)); // 添加文件名到请求头中
                         },
                         success(response) {
+                            console.log("秒传成功")
                             isUploading = false
-                            alert('上传成功')
+                            alert('秒传成功')
                             // 文件上传成功后的处理
                             console.log('File uploaded successfully.');
 
                             document.getElementById("uploadForm").reset();
                             getFileList()
                         },
-                        error(xhr, status, error) {
-                            isUploading = false
-                            alert('上传失败')
-                            // 文件上传失败时的处理
-                            console.log('File upload failed: ' + error);
+                        error(xhr, status, error) { // 秒传失败
+                            console.log("秒传失败")
+                            $.ajax({
+                                url: '/api/v1/file/upload', // 后端处理上传的URL
+                                type: 'POST',
+                                data: formData,
+                                processData: false,
+                                contentType: false,
+                                beforeSend: function(xhr) {
+                                    xhr.setRequestHeader('token', token); // 添加令牌到请求头中
+                                    xhr.setRequestHeader('sha1', fileSHA1); // 添加sha1到请求头中
+                                    xhr.setRequestHeader('filename', encodeURIComponent(fileName)); // 添加文件名到请求头中
+                                },
+                                success(response) {
+                                    isUploading = false
+                                    alert('上传成功')
+                                    // 文件上传成功后的处理
+                                    console.log('File uploaded successfully.');
 
-                            document.getElementById("uploadForm").reset();
-                            getFileList()
+                                    document.getElementById("uploadForm").reset();
+                                    getFileList()
+                                },
+                                error(xhr, status, error) {
+                                    isUploading = false
+                                    alert('上传失败')
+                                    // 文件上传失败时的处理
+                                    console.log('File upload failed: ' + error);
+
+                                    document.getElementById("uploadForm").reset();
+                                    getFileList()
+                                }
+                            });
                         }
                     });
                 });
