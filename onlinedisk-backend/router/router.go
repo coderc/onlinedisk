@@ -21,6 +21,8 @@ func SetupRouter(r *gin.Engine) {
 			fileRouter.POST("/upload", handler.UploadFileHandler)
 			fileRouter.POST("/chunk", handler.FileChunkHandler)
 			fileRouter.GET("/list", handler.FileListHandler)
+			fileRouter.GET("/download", handler.DownloadFileHandler)
+			fileRouter.POST("/delete", handler.DeleteFileHandler)
 		}
 
 		userRouter := v1Router.Group("/user")

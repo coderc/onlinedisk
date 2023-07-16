@@ -13,6 +13,9 @@ func Jwt() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.GetHeader("token")
 		if token == "" {
+			token = c.Query("token")
+		}
+		if token == "" {
 			c.JSON(http.StatusUnauthorized, nil)
 			return
 		}
