@@ -33,7 +33,7 @@ func UploadFileHandler(c *gin.Context) {
 	sha1 := c.GetHeader("sha1")
 	if sha1 != "" { // 尝试秒传
 		fileName := c.GetHeader("filename")
-		fileName = url.QueryEscape(fileName)
+		fileName, _ = url.QueryUnescape(fileName)
 		fileModel := hasFile(sha1)
 		if fileModel != nil && fileModel.SHA1 == sha1 { // 秒传成功
 			userFileModel := &model.UserFileModel{

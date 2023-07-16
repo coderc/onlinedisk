@@ -41,6 +41,7 @@
         let token = ""
         let isUploading = false
         function onOpen() {
+            // 获取用户信息
             userModel = JSON.parse(localStorage.getItem("userModel"))
             token = localStorage.getItem("token")
             console.log(userModel)
@@ -147,7 +148,8 @@
                             // 文件上传成功后的处理
                             console.log('File uploaded successfully.');
 
-                            location.reload();
+                            document.getElementById("uploadForm").reset();
+                            getFileList()
                         },
                         error(xhr, status, error) {
                             isUploading = false
@@ -155,7 +157,8 @@
                             // 文件上传失败时的处理
                             console.log('File upload failed: ' + error);
 
-                            location.reload();
+                            document.getElementById("uploadForm").reset();
+                            getFileList()
                         }
                     });
                 });
