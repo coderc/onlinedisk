@@ -1,7 +1,8 @@
 package router
 
 import (
-	"onlinedisk-backend/handler"
+	fileHandler "onlinedisk-backend/handler/file_handler"
+	userHandler "onlinedisk-backend/handler/user_handler"
 	"onlinedisk-backend/middleware"
 
 	"github.com/gin-gonic/gin"
@@ -18,17 +19,17 @@ func SetupRouter(r *gin.Engine) {
 		fileRouter := v1Router.Group("/file")
 		fileRouter.Use(middleware.Jwt())
 		{
-			fileRouter.POST("/upload", handler.UploadFileHandler)
-			fileRouter.POST("/chunk", handler.FileChunkHandler)
-			fileRouter.GET("/list", handler.FileListHandler)
-			fileRouter.GET("/download", handler.DownloadFileHandler)
-			fileRouter.POST("/delete", handler.DeleteFileHandler)
+			fileRouter.POST("/upload", fileHandler.FileUploadHandler)
+			fileRouter.POST("/chunk", fileHandler.FileSecondPassHandler)
+			fileRouter.GET("/list", fileHandler.FileListHandler)
+			fileRouter.GET("/download", fileHandler.FileDownloadHandler)
+			fileRouter.POST("/delete", fileHandler.FileDeleteHandler)
 		}
 
 		userRouter := v1Router.Group("/user")
 		{
-			userRouter.POST("/signup", handler.SignupHandler)
-			userRouter.POST("/signin", handler.SigninHandler)
+			userRouter.POST("/signup", userHandler.SignupHandler)
+			userRouter.POST("/signin", userHandler.SigninHandler)
 		}
 	}
 }

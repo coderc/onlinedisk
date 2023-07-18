@@ -32,7 +32,6 @@
                 contentType: 'application/json',
                 data: data,
                 success(res) {
-                    alert('登录成功...\n即将跳转到home页面...')
                     console.log(res)
                     localStorage.setItem('userModel', JSON.stringify(res.data.userModel))
                     localStorage.setItem('token', res.data.token)
@@ -43,6 +42,14 @@
                 }
             })
         }
+
+        function onOpen() {
+            $('input[name="username"]').focus()
+        }
+
+        $(document).ready(function() {
+            onOpen()
+        })
     </script>
 </body>
 </html>

@@ -13,14 +13,20 @@
 <body>
     <h2>home</h2>
     <!-- 展示用户信息 table -->
-    <h4>username:&nbsp;<span id="username"></span></h4>
-    <h4>create_time:&nbsp;<span id="create_time"></span></h4>
-    <h4>update_time:&nbsp;<span id="update_time"></span></h4>
+    <h4>username:&nbsp;<span id="username">...</span></h4>
+    <h4>create_time:&nbsp;<span id="create_time">...</span></h4>
+    <h4>update_time:&nbsp;<span id="update_time">...</span></h4>
 
     <form id="uploadForm" enctype="multipart/form-data">
-        <input type="file" name="file">
-        <input type="button" value="Upload" onclick="upload()">
+        <input type="file" name="file"><br/>
+        <input type="button" value="上传文件" onclick="upload()">
     </form>
+    <h4 id="uploading" style="color: red;"></h4>
+
+    <h3>文件分段上传</h3>
+    <input type="file" id="multipartFileInput"><br/>
+    <button id="multipartUploadButton" onclick="multipartUpload()">分段上传</button>
+    <h4 id="multipartUploading" style="color: red;"></h4>
 
     <table>
         <thead>
@@ -35,18 +41,34 @@
         </thead>
         <tbody id="fileList">
         </tbody>
+
+        <button style="position: fixed; bottom: 10px; left: 10px;" onclick="signOut()">登出</button>
     </table>
     <script>
         let userModel = {}
         let token = ""
         let isUploading = false
         let isDownload = false
+        let isDelete = false
+        let isMultipartUpload = false
+        let chunkSize = -1
+        let chunkCount = -1
+        let currentChunk = -1
+        let multipartUploadId = -1
+
+        // 页面初始化完毕
         function onOpen() {
             // 获取用户信息
             userModel = JSON.parse(localStorage.getItem("userModel"))
             token = localStorage.getItem("token")
             console.log(userModel)
             console.log(token)
+
+            if (!userModel || !token) {
+                alert("请先登录...")
+                window.location.href = '/static/view/signin.html'
+                return
+            }
 
             $('#username').text(userModel.username)
             $('#create_time').text(userModel.create_time)
@@ -56,6 +78,92 @@
             getFileList()
         }
 
+        // 文件分段上传
+        function multipartUpload() {
+            if (isMultipartUpload) {
+                alert("文件分段上传中...")
+                return
+            }
+
+            isMultipartUpload = true
+            $('#multipartUploading').text("文件分段上传中...")
+
+            multipartUploadId = userModel.uuid + "_" + getTimeStamp()
+            const fileInput = document.querySelector('#multipartFileInput');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('请选择文件');
+                isMultipartUpload = false
+                return;
+            }
+
+            currentChunk = 0
+            chunkSize = Math.ceil(file.size / 10)
+            chunkCount = Math.ceil(file.size / chunkSize)
+
+            // 计算文件sha1
+            calculateFileHash(file, function(error, hash) {
+                if (error) {
+                    alert("计算文件sha1" + error.message);
+                    isMultipartUpload = false
+                    return;
+                }
+                console.log(hash)
+                initUploadMultipart(file, hash) // 初始化分段上传
+                // uploadChunk(file, hash)
+            });
+        }
+
+        // 初始化分段上传
+        function initUploadMultipart(file, fileSHA1) {
+            const fileName = file.name
+            const fileSize = file.size
+            const chunkSize = chunkSize
+            const chunkCount = chunkCount
+
+            $.ajax({
+                url: "/api/v1/file/inituploadmultipart",
+                type: "POST",
+                headers: {
+                    "token": token
+                },
+                data: {
+                    "fileName": fileName,
+                    "fileSize": fileSize,
+                    "chunkSize": chunkSize,
+                    "chunkCount": chunkCount,
+                    "fileSHA1": fileSHA1,
+                    "uploadId": multipartUploadId
+                },
+                success(res) {
+                    console.log("初始化分段上传成功")
+                    isMultipartUpload = false
+                },
+                error(res) {
+                    console.log("初始化分段上传失败")
+                    isMultipartUpload = false
+                }
+            })
+        }
+        // 上传单个分块
+        async function uploadChunk(file, fileSHA1) {
+            const start = currentChunk * chunkSize;
+            const end = Math.min(file.size, start + chunkSize);
+            const chunk = file.slice(start, end);
+
+            const formData = new FormData();
+            formData.append('file', chunk);
+            formData.append('multipartUploadId', multipartUploadId);
+            formData.append('chunk', currentChunk);
+            formData.append('chunkCount', chunkCount);
+            formData.append('chunkSize', chunkSize);
+            formData.append('fileName', file.name);
+            formData.append('fileSize', file.size);
+
+            
+        }
+
+        // 获取文件列表
         function getFileList() {
             $.ajax({
                 url: "/api/v1/file/list",
@@ -98,19 +206,23 @@
                     const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
                     callback(null, hashHex); // 通过回调函数返回SHA-1字符串
                 })
-                .catch(error => callback(error));
+                .catch(function(err) {
+                    callback(new Error("计算文件sha1: crypto error"))
+                });
             };
             reader.onerror = function() {
-                callback(new Error('Failed to read file.'));
+                callback(new Error('计算文件sha1: reader error'));
             };
             reader.readAsArrayBuffer(file);
         }
 
+        // 文件上传
         function upload() { // 文件上传
             if (isUploading) {
                 alert('文件正在上传中...')
                 return
             }
+            $('#uploading').text("文件上传中...")
 
             var formData = new FormData($('#uploadForm')[0]); // 创建FormData对象
 
@@ -144,6 +256,7 @@
                         // 文件上传成功后的处理
                         console.log('File uploaded successfully.');
 
+                        $('#uploading').text("")
                         document.getElementById("uploadForm").reset();
                         getFileList()
                     },
@@ -166,6 +279,7 @@
                                 // 文件上传成功后的处理
                                 console.log('File uploaded successfully.');
 
+                                $('#uploading').text("")
                                 document.getElementById("uploadForm").reset();
                                 getFileList()
                             },
@@ -175,6 +289,7 @@
                                 // 文件上传失败时的处理
                                 console.log('File upload failed: ' + error);
 
+                                $('#uploading').text("")
                                 document.getElementById("uploadForm").reset();
                                 getFileList()
                             }
@@ -184,13 +299,20 @@
             });
         }
 
+        // 文件下载
         function download(fileUUID, fileName) {
             console.log(fileUUID, fileName)
             url = '/api/v1/file/download?uuid=' + fileUUID + '&filename=' + encodeURI(fileName) + '&token=' + token
             window.open(url, '_blank')
         }
 
+        // 文件删除
         function deleteFile(fileUUID) {
+            if (isDelete) {
+                alert('文件正在删除中...')
+                return
+            }
+            isDelete = true
             console.log("deleteFile: " + fileUUID)
             $.ajax({
                 url: '/api/v1/file/delete', // 后端处理上传的URL
@@ -201,15 +323,36 @@
                 },
                 success(response) {
                     alert('删除成功')
+                    isDelete = false
                     getFileList()
                 },
                 error(xhr, status, error) {
                     alert('删除失败')
+                    isDelete = false
                     getFileList()
                 }
             });
         }
 
+        function signOut() {
+            localStorage.removeItem('token')
+            localStorage.removeItem('userModel')
+            window.location.href = '/static/view/signin.html'
+        }
+        // 获取当前时间戳
+        function getTimeStamp() {
+            const currentDate = new Date();
+            const year = currentDate.getFullYear();
+            const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+            const day = String(currentDate.getDate()).padStart(2, '0');
+            const hours = String(currentDate.getHours()).padStart(2, '0');
+            const minutes = String(currentDate.getMinutes()).padStart(2, '0');
+            const seconds = String(currentDate.getSeconds()).padStart(2, '0');
+            const milliseconds = String(currentDate.getMilliseconds()).padStart(3, '0');
+
+            const formattedDate = `${year}-${month}-${day}-${hours}:${minutes}:${seconds}.${milliseconds}`;
+            console.log(formattedDate);
+        }
         $(document).ready(function() {
             onOpen()
         })

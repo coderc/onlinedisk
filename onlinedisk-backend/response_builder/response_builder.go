@@ -5,13 +5,14 @@ import (
 )
 
 const (
-	SuccessCode              = 0
-	FileUploadFailedCode     = 1001
-	FailedSelectFileListCode = 1002
-	FileDownloadFailedCode   = 1003
-	FileDeleteFailedCode     = 1004
-	SignupFailedCode         = 2001
-	SigninFailedCode         = 2002
+	SuccessCode                      = 0
+	FileUploadFailedCode             = 1001
+	FailedSelectFileListCode         = 1002
+	FileDownloadFailedCode           = 1003
+	FileDeleteFailedCode             = 1004
+	FileUploadMultipleInitFailedCode = 1005
+	SignupFailedCode                 = 2001
+	SigninFailedCode                 = 2002
 )
 
 func SendResponse(c *gin.Context, httpCode, serviceCode int, data interface{}) {
