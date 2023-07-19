@@ -28,7 +28,11 @@ func SetupRouter(r *gin.Engine) {
 			// 分段上传: init
 			fileRouter.POST("/multipart_upload/init", fileHandler.FileUploadMultipleInitHandler)
 			// 分段上传: single chunk upload
-			fileRouter.POST("/multipart_upload/chunk", fileHandler.FileUploadMultipleHandler)
+			fileRouter.POST("/multipart_upload/chunk", fileHandler.FileUploadMultipleChunkHandler)
+			// 断点续传上传: 检查chunk是否存在
+			fileRouter.GET("/multipart_upload/check", fileHandler.FileUploadMultipleChunkCheckHandler)
+			// 分段上传: merge
+			fileRouter.POST("/multipart_upload/merge", fileHandler.FileUploadMultipleMergeHandler)
 		}
 
 		userRouter := v1Router.Group("/user")

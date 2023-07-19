@@ -24,8 +24,8 @@ func FileUploadHandler(c *gin.Context) {
 		return
 	}
 
-	userUUIDBytes, _ := c.Get("uuid")
-	userUUID := userUUIDBytes.(int64)
+	userUUIDAny, _ := c.Get("uuid")
+	userUUID := userUUIDAny.(int64)
 	sha1Front := c.GetHeader("sha1")
 	fileUUID, err := snowflake.GetId(1, 1)
 	if err != nil {
@@ -63,10 +63,10 @@ func FileUploadHandler(c *gin.Context) {
 	}
 
 	// 计算文件哈希值
-	sha1Backend := utils.EncryptBytesSHA1(fileBytes)
+	fileSHA1 := utils.EncryptBytesSHA1(fileBytes)
 
-	if sha1Front != sha1Backend { // 传输过程中文件被修改
-		logger.Zap().Error("file sha1 not equal", zap.String("sha1Front", sha1Front), zap.String("sha1Backend", sha1Backend))
+	if sha1Front != fileSHA1 { // 传输过程中文件被修改
+		logger.Zap().Error("file sha1 not equal", zap.String("sha1Front", sha1Front), zap.String("sha1Backend", fileSHA1))
 		resp.SendResponse(c, http.StatusBadRequest, resp.FileUploadFailedCode, nil)
 		return
 	}
@@ -75,7 +75,7 @@ func FileUploadHandler(c *gin.Context) {
 	fileModel := &model.FileModel{
 		UUID:   fileUUID,
 		UserId: userUUID,
-		SHA1:   sha1Backend,
+		SHA1:   fileSHA1,
 		Name:   utils.CreateFileName("test"),
 		Size:   fileHeader.Size,
 		Path:   filePath,

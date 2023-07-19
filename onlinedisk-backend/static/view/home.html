@@ -101,7 +101,6 @@
             }
             
             // 分段上传变量初始化
-            multipartUploadId = "userUUID-" + userModel.uuid + ":" + getTimeStamp()
             multipartFileSize = file.size
             multipartFileName = file.name
             multipartChunkSize = Math.ceil(multipartFileSize / 10)
@@ -118,13 +117,15 @@
                 console.log(hash)
                 multipartFileSHA1 = hash
                 initUploadMultipart(file) // 初始化分段上传
-                // uploadChunk(file, hash)
+                fileInput.value = ""
             });
+
         }
 
         // 初始化分段上传
         function initUploadMultipart(file) {
-
+            // 不会发生冲突的uploadId
+            multipartUploadId = "multipart" + userModel.uuid + ":" + multipartFileSHA1
             let JSONdata = JSON.stringify({
                 "uploadId": multipartUploadId,
                 "fileName": multipartFileName,
@@ -143,7 +144,7 @@
                 data: JSONdata,
                 success(res) {
                     console.log("初始化分段上传成功")
-                    uploadChunk(file)
+                    uploadChunk(file, 0)
                 },
                 error(res) {
                     console.log("初始化分段上传失败")
@@ -152,8 +153,19 @@
             })
         }
         // 上传单个分块
-        async function uploadChunk(file) {
-            const start = multipartCurrentChunk * multipartChunkSize;
+        function uploadChunk(file, nowCurrentChunk) {
+            // 判断当前chunk是否已经上传
+            if (nowCurrentChunk > multipartChunkCount) {
+                console.log("分段上传完成")
+                clearMultipartUploadInfo()
+                return
+            }
+
+            if (uploadChunkCheck(nowCurrentChunk)) { // 已经上传过此chunk
+                multipartCurrentChunk ++ 
+                uploadChunk(file, nowCurrentChunk + 1)
+            }
+            const start = nowCurrentChunk * multipartChunkSize;
             const end = Math.min(multipartFileSize, start + multipartChunkSize);
             const chunk = file.slice(start, end);
 
@@ -161,7 +173,7 @@
             formData.append('file', chunk);
             formData.append('uploadId', multipartUploadId);
             formData.append('chunkSize', end - start);
-            formData.append('currentChunk', multipartCurrentChunk);
+            formData.append('currentChunk', nowCurrentChunk);
             formData.append('fileName', multipartFileName);
             formData.append('fileSize', multipartFileSize);
             formData.append('fileSHA1', multipartFileSHA1)
@@ -181,23 +193,84 @@
                     multipartCurrentChunk ++ 
                     if (multipartCurrentChunk == multipartChunkCount) { // 上传完成
                         console.log("分段上传完成")
-                        isMultipartUpload = false
-                        $('#multipartUploading').text("")
-                        getFileList()
+                        // 合并分块
+                        mergeChunk()
                         return
                     }
 
-                    uploadChunk(file) // 上传下一个分块
+                    uploadChunk(file, nowCurrentChunk + 1) // 上传下一个分块
                 },
                 error(res) {
                     console.log("chunk " + multipartCurrentChunk + " 上传失败")
                     multipartUploadFailedCnt ++ 
                     if (multipartUploadFailedCnt <= 10 * multipartChunkCount) { // 上传失败，重试
-                        uploadChunk(file) // 重新上传当前分块
+                        uploadChunk(file, nowCurrentChunk) // 重新上传当前分块
+                        return
+                    } else { // 上传失败,数据清理
+                        console.log("分段上传失败")
+                        clearMultipartUploadInfo()
                         return
                     }
                 }
             })
+        }
+
+        function mergeChunk() {
+            $.ajax({
+                url: "/api/v1/file/multipart_upload/merge",
+                type: "POST",
+                headers: {
+                    "token": token
+                },
+                data: JSON.stringify({
+                    "uploadId": multipartUploadId,
+                    "fileName": multipartFileName,
+                    "fileSize": multipartFileSize,
+                    "chunkCount": multipartChunkCount,
+                    "fileSHA1": multipartFileSHA1
+                }),
+                success(res) {
+                    console.log("合并分段上传成功")
+                    clearMultipartUploadInfo()
+                    getFileList()
+                },
+                error(res) {
+                    console.log("合并分段上传失败")
+                    clearMultipartUploadInfo()
+                }
+            })
+        }
+
+        function uploadChunkCheck(currentChunk) {
+            if (typeof currentChunk != "number" || currentChunk < 0 || currentChunk >= multipartChunkCount) {
+                return false
+            }
+            
+            $.ajax({
+                url: "/api/v1/file/multipart_upload/check?uploadId=" + multipartUploadId + "&currentChunk=" + currentChunk + "&token=" + token,
+                type: "GET",
+                success(res) {
+                    console.log("chunk " + currentChunk + " 已经存在")
+                    return true
+                },
+                error(res) {
+                    console.log("chunk " + currentChunk + " 不存在")
+                    return false
+                }
+            })
+        }
+
+        function clearMultipartUploadInfo() {
+            $('#multipartUploading').text("")
+            isMultipartUpload = false
+            multipartUploadId = -1
+            multipartFileSize = -1
+            multipartFileName = ""
+            multipartFileSHA1 = ""
+            multipartChunkSize = -1
+            multipartChunkCount = -1
+            multipartCurrentChunk = -1
+            multipartUploadFailedCnt = 0
         }
 
         // 获取文件列表

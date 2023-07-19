@@ -12,6 +12,7 @@ const (
 	FileDeleteFailedCode             = 1004
 	FileUploadMultipleInitFailedCode = 1005
 	FileUploadMultipleFailedCode     = 1006
+	FileUploadMultipleNilChunkCode   = 1007
 	SignupFailedCode                 = 2001
 	SigninFailedCode                 = 2002
 )
