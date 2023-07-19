@@ -20,7 +20,7 @@ func SetupRouter(r *gin.Engine) {
 		fileRouter.Use(middleware.Jwt())
 		{
 			fileRouter.POST("/upload", fileHandler.FileUploadHandler)
-			fileRouter.POST("/chunk", fileHandler.FileSecondPassHandler)
+			fileRouter.POST("/second_pass", fileHandler.FileSecondPassHandler)
 			fileRouter.GET("/list", fileHandler.FileListHandler)
 			fileRouter.GET("/download", fileHandler.FileDownloadHandler)
 			fileRouter.POST("/delete", fileHandler.FileDeleteHandler)

@@ -2,6 +2,7 @@ package file_store
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/coderc/onlinedisk-util/mapper"
 	"github.com/coderc/onlinedisk-util/model"
@@ -11,7 +12,7 @@ const (
 	errorFileNotExist = "文件不存在"
 )
 
-func Chunk(fileSHA1, fileName string, userId int64) error {
+func CheckSecondPass(fileSHA1, fileName string, userId int64) error {
 	fileModel := hasFile(fileSHA1)
 	if fileModel != nil && fileModel.SHA1 == fileSHA1 { // 秒传成功
 		userFileModel := &model.UserFileModel{
@@ -20,6 +21,10 @@ func Chunk(fileSHA1, fileName string, userId int64) error {
 			FileName: fileName,
 		}
 		err := mapper.InsertUserFile(userFileModel)
+		if strings.Index(err.Error(), "table_user_file.user_id_file_id_unique") != -1 {
+			return nil
+		}
+
 		if err != nil {
 			return err
 		} else {

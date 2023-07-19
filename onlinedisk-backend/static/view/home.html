@@ -347,7 +347,7 @@
                 console.log('File hash:', fileSHA1)
                 isUploading = true
                 $.ajax({
-                    url: '/api/v1/file/chunk', // 后端处理上传的URL
+                    url: '/api/v1/file/second_pass', // 秒传接口
                     type: 'POST',
                     // data: formData,
                     processData: false,

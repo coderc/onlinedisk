@@ -17,7 +17,7 @@ func FileSecondPassHandler(c *gin.Context) {
 	sha1 := c.GetHeader("sha1")
 	fileName := c.GetHeader("filename")
 	fileName, _ = url.QueryUnescape(fileName)
-	err := file_store.Chunk(sha1, fileName, userUUID)
+	err := file_store.CheckSecondPass(sha1, fileName, userUUID)
 	if err != nil { // 秒传失败
 		logger.Zap().Error(err.Error())
 		resp.SendResponse(c, http.StatusInternalServerError, resp.FileUploadFailedCode, nil)
