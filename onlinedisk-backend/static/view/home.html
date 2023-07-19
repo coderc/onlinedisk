@@ -51,10 +51,14 @@
         let isDownload = false
         let isDelete = false
         let isMultipartUpload = false
-        let chunkSize = -1
-        let chunkCount = -1
-        let currentChunk = -1
         let multipartUploadId = -1
+        let multipartFileSize = -1
+        let multipartFileName = ""
+        let multipartFileSHA1 = ""
+        let multipartChunkSize = -1
+        let multipartChunkCount = -1
+        let multipartCurrentChunk = -1
+        let multipartUploadFailedCnt = 0
 
         // 页面初始化完毕
         function onOpen() {
@@ -88,7 +92,6 @@
             isMultipartUpload = true
             $('#multipartUploading').text("文件分段上传中...")
 
-            multipartUploadId = userModel.uuid + "_" + getTimeStamp()
             const fileInput = document.querySelector('#multipartFileInput');
             const file = fileInput.files[0];
             if (!file) {
@@ -96,10 +99,14 @@
                 isMultipartUpload = false
                 return;
             }
-
-            currentChunk = 0
-            chunkSize = Math.ceil(file.size / 10)
-            chunkCount = Math.ceil(file.size / chunkSize)
+            
+            // 分段上传变量初始化
+            multipartUploadId = "userUUID-" + userModel.uuid + ":" + getTimeStamp()
+            multipartFileSize = file.size
+            multipartFileName = file.name
+            multipartChunkSize = Math.ceil(multipartFileSize / 10)
+            multipartChunkCount = Math.ceil(multipartFileSize / multipartChunkSize)
+            multipartCurrentChunk = 0
 
             // 计算文件sha1
             calculateFileHash(file, function(error, hash) {
@@ -109,35 +116,34 @@
                     return;
                 }
                 console.log(hash)
-                initUploadMultipart(file, hash) // 初始化分段上传
+                multipartFileSHA1 = hash
+                initUploadMultipart(file) // 初始化分段上传
                 // uploadChunk(file, hash)
             });
         }
 
         // 初始化分段上传
-        function initUploadMultipart(file, fileSHA1) {
-            const fileName = file.name
-            const fileSize = file.size
-            const chunkSize = chunkSize
-            const chunkCount = chunkCount
+        function initUploadMultipart(file) {
+
+            let JSONdata = JSON.stringify({
+                "uploadId": multipartUploadId,
+                "fileName": multipartFileName,
+                "fileSize": multipartFileSize,
+                "chunkSize": multipartChunkSize,
+                "chunkCount": multipartChunkCount,
+                "fileSHA1": multipartFileSHA1
+            })
 
             $.ajax({
-                url: "/api/v1/file/inituploadmultipart",
+                url: "/api/v1/file/multipart_upload/init",
                 type: "POST",
                 headers: {
                     "token": token
                 },
-                data: {
-                    "fileName": fileName,
-                    "fileSize": fileSize,
-                    "chunkSize": chunkSize,
-                    "chunkCount": chunkCount,
-                    "fileSHA1": fileSHA1,
-                    "uploadId": multipartUploadId
-                },
+                data: JSONdata,
                 success(res) {
                     console.log("初始化分段上传成功")
-                    isMultipartUpload = false
+                    uploadChunk(file)
                 },
                 error(res) {
                     console.log("初始化分段上传失败")
@@ -146,21 +152,52 @@
             })
         }
         // 上传单个分块
-        async function uploadChunk(file, fileSHA1) {
-            const start = currentChunk * chunkSize;
-            const end = Math.min(file.size, start + chunkSize);
+        async function uploadChunk(file) {
+            const start = multipartCurrentChunk * multipartChunkSize;
+            const end = Math.min(file.size, start + multipartFileSize);
             const chunk = file.slice(start, end);
 
             const formData = new FormData();
             formData.append('file', chunk);
-            formData.append('multipartUploadId', multipartUploadId);
-            formData.append('chunk', currentChunk);
-            formData.append('chunkCount', chunkCount);
-            formData.append('chunkSize', chunkSize);
-            formData.append('fileName', file.name);
-            formData.append('fileSize', file.size);
+            formData.append('uploadId', multipartUploadId);
+            formData.append('chunkSize', end - start);
+            formData.append('currentChunk', multipartCurrentChunk);
+            formData.append('fileName', multipartFileName);
+            formData.append('fileSize', multipartFileSize);
+            formData.append('fileSHA1', multipartFileSHA1)
 
-            
+            const url = '/api/v1/file/multipart_upload/chunk';
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    "token": token
+                },
+                success(res) {
+                    console.log("chunk " + multipartCurrentChunk + " 上传成功")
+                    multipartCurrentChunk ++ 
+                    if (multipartCurrentChunk == multipartChunkCount) { // 上传完成
+                        console.log("分段上传完成")
+                        isMultipartUpload = false
+                        $('#multipartUploading').text("")
+                        getFileList()
+                        return
+                    }
+
+                    uploadChunk(file) // 上传下一个分块
+                },
+                error(res) {
+                    console.log("chunk " + multipartCurrentChunk + " 上传失败")
+                    multipartUploadFailedCnt ++ 
+                    if (multipartUploadFailedCnt <= 10 * multipartChunkCount) { // 上传失败，重试
+                        uploadChunk(file) // 重新上传当前分块
+                        return
+                    }
+                }
+            })
         }
 
         // 获取文件列表
@@ -206,12 +243,10 @@
                     const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
                     callback(null, hashHex); // 通过回调函数返回SHA-1字符串
                 })
-                .catch(function(err) {
-                    callback(new Error("计算文件sha1: crypto error"))
-                });
+                .catch(error => callback(error));
             };
             reader.onerror = function() {
-                callback(new Error('计算文件sha1: reader error'));
+                callback(new Error('Failed to read file.'));
             };
             reader.readAsArrayBuffer(file);
         }
@@ -350,8 +385,9 @@
             const seconds = String(currentDate.getSeconds()).padStart(2, '0');
             const milliseconds = String(currentDate.getMilliseconds()).padStart(3, '0');
 
-            const formattedDate = `${year}-${month}-${day}-${hours}:${minutes}:${seconds}.${milliseconds}`;
+            const formattedDate = `${year}-${month}-${day}-${hours}-${minutes}-${seconds}.${milliseconds}`;
             console.log(formattedDate);
+            return formattedDate;
         }
         $(document).ready(function() {
             onOpen()

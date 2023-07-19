@@ -17,6 +17,13 @@ import (
 
 // FileUploadHandler 用户端上传文件
 func FileUploadHandler(c *gin.Context) {
+	fileHeader, err := c.FormFile("file")
+	if err != nil {
+		logger.Zap().Error(errorReadFileFromRequest, zap.Error(err))
+		resp.SendResponse(c, http.StatusBadRequest, resp.FileUploadFailedCode, nil)
+		return
+	}
+
 	userUUIDBytes, _ := c.Get("uuid")
 	userUUID := userUUIDBytes.(int64)
 	sha1Front := c.GetHeader("sha1")
@@ -24,12 +31,6 @@ func FileUploadHandler(c *gin.Context) {
 	if err != nil {
 		logger.Zap().Error(err.Error())
 		resp.SendResponse(c, http.StatusInternalServerError, resp.FileUploadFailedCode, nil)
-		return
-	}
-	fileHeader, err := c.FormFile("file")
-	if err != nil {
-		logger.Zap().Error(errorReadFileFromRequest, zap.Error(err))
-		resp.SendResponse(c, http.StatusBadRequest, resp.FileUploadFailedCode, nil)
 		return
 	}
 
