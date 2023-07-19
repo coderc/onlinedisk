@@ -154,7 +154,7 @@
         // 上传单个分块
         async function uploadChunk(file) {
             const start = multipartCurrentChunk * multipartChunkSize;
-            const end = Math.min(file.size, start + multipartFileSize);
+            const end = Math.min(multipartFileSize, start + multipartChunkSize);
             const chunk = file.slice(start, end);
 
             const formData = new FormData();
