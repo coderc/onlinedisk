@@ -1,9 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"github.com/coderc/onlinedisk-util/config"
 	"github.com/coderc/onlinedisk-util/db"
 	"github.com/coderc/onlinedisk-util/logger"
+	"google.golang.org/grpc"
+	"net"
+	"onlinedisk-user-service/register"
 )
 
 func Init() {
@@ -14,4 +18,18 @@ func Init() {
 
 func main() {
 	Init()
+
+	// 启动rpc server
+	rpcServer := grpc.NewServer()
+	// 注册服务
+	register.Register(rpcServer)
+	lister, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", config.GetConfig().ServerConfig.Port))
+	if err != nil {
+		panic(err)
+	}
+	// 监听端口
+	err = rpcServer.Serve(lister)
+	if err != nil {
+		panic(err)
+	}
 }

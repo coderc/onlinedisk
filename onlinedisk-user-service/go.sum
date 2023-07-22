@@ -1,8 +1,8 @@
 github.com/GUAIK-ORG/go-snowflake v0.0.0-20200116064823-220c4260e85f h1:RDkg3pyE1qGbBpRWmvSN9RNZC5nUrOaEPiEpEb8y2f0=
 github.com/GUAIK-ORG/go-snowflake v0.0.0-20200116064823-220c4260e85f/go.mod h1:zA7AF9RTfpluCfz0omI4t5KCMaWHUMicsZoMccnaT44=
 github.com/benbjohnson/clock v1.1.0 h1:Q92kusRqC1XV2MjkWETPvjJVqKetz1OzxZB7mHJLju8=
-github.com/coderc/onlinedisk-util v0.1.15 h1:SPZeCxCbzb0Y2LCy3//oBz8BRbYJWu0xFDZCtHM0wNY=
-github.com/coderc/onlinedisk-util v0.1.15/go.mod h1:ZTqByGEwXb0BpPtyclOnnuCVUHkPxl1czrvqJJGmVYg=
+github.com/coderc/onlinedisk-util v0.1.16 h1:bfeoPWL0X6VAmsyY9622ZvH1GaL6XHK9b0zs656eBwQ=
+github.com/coderc/onlinedisk-util v0.1.16/go.mod h1:ZTqByGEwXb0BpPtyclOnnuCVUHkPxl1czrvqJJGmVYg=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/go-sql-driver/mysql v1.7.0/go.mod h1:OXbVy3sEdcQ2Doequ6Z5BW6fXNQTmx+9S1MCJN5yJMI=
 github.com/go-sql-driver/mysql v1.7.1 h1:lUIinVbN1DY0xBg0eMOzmmtGoHwWBbvnWubQUrtU8EI=

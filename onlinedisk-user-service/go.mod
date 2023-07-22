@@ -5,7 +5,7 @@ go 1.19
 //replace github.com/coderc/onlinedisk-util => ../../onlinedisk-util
 
 require (
-	github.com/coderc/onlinedisk-util v0.1.15
+	github.com/coderc/onlinedisk-util v0.1.16
 	go.uber.org/zap v1.24.0
 	google.golang.org/grpc v1.56.2
 	google.golang.org/protobuf v1.31.0
