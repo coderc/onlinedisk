@@ -19,19 +19,13 @@ import (
 
 	"github.com/coderc/onlinedisk-util/logger"
 	"github.com/gin-gonic/gin"
+
+	requestStruct "onlinedisk-backend/request_struct"
 )
 
-type MultipleInfo struct {
-	UploadId   string `json:"uploadId"`
-	FileName   string `json:"fileName"`
-	FileSize   int64  `json:"fileSize"`
-	ChunkSize  int64  `json:"chunkSize" binding:"omitempty"`
-	ChunkCount int64  `json:"chunkCount"`
-	FileSHA1   string `json:"fileSHA1"`
-}
-
+// FileUploadMultipleInitHandler 初始化分块上传
 func FileUploadMultipleInitHandler(c *gin.Context) {
-	var info MultipleInfo
+	var info requestStruct.MultipleInfo
 	if err := c.BindJSON(&info); err != nil {
 		logger.Zap().Error(err.Error())
 		resp.SendResponse(c, http.StatusBadRequest, resp.FileUploadMultipleInitFailedCode, nil)
@@ -52,6 +46,7 @@ func FileUploadMultipleInitHandler(c *gin.Context) {
 	resp.SendResponse(c, http.StatusOK, resp.SuccessCode, nil)
 }
 
+// FileUploadMultipleChunkHandler 上传单个分块
 func FileUploadMultipleChunkHandler(c *gin.Context) {
 	fileHandler, err := c.FormFile("file")
 	if err != nil {
@@ -142,7 +137,7 @@ func FileUploadMultipleChunkCheckHandler(c *gin.Context) {
 
 // FileUploadMultipleMergeHandler 合并分块 并删除redis数据, 上传db数据
 func FileUploadMultipleMergeHandler(c *gin.Context) {
-	var info MultipleInfo
+	var info requestStruct.MultipleInfo
 	if err := c.BindJSON(&info); err != nil {
 		logger.Zap().Error(err.Error())
 		resp.SendResponse(c, http.StatusBadRequest, resp.FileUploadMultipleInitFailedCode, nil)
@@ -166,7 +161,7 @@ func FileUploadMultipleMergeHandler(c *gin.Context) {
 	}
 
 	// 删除redis数据
-	rdb.GetConn().Del(context.Background(), info.UploadId)
+	rdb.GetConn().Del(context.TODO(), info.UploadId)
 
 	// 数据持久化
 	fileModel := &model.FileModel{
@@ -214,7 +209,10 @@ func mergeChunk(path, uploadId string, chunkCount int) error {
 			return err
 		}
 
-		defer currentChunkFile.Close()
+		defer func() {
+			currentChunkFile.Close()
+			os.Remove(currentChunkPath)
+		}()
 
 		// 将分块文件写入新文件
 		io.Copy(newFile, currentChunkFile)
