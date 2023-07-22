@@ -3,12 +3,13 @@ package file_handler
 import (
 	"net/http"
 	"onlinedisk-backend/pkg/file_store"
-	resp "onlinedisk-backend/response_builder"
 	"strconv"
 
 	"github.com/coderc/onlinedisk-util/logger"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+
+	responseUtil "github.com/coderc/onlinedisk-util/response"
 )
 
 const (
@@ -31,17 +32,17 @@ func FileDeleteHandler(c *gin.Context) {
 
 	if err != nil {
 		logger.Zap().Error(err.Error())
-		resp.SendResponse(c, http.StatusBadRequest, resp.FileDeleteFailedCode, nil)
+		responseUtil.SendResponse(c, http.StatusBadRequest, responseUtil.FileDeleteFailedCode, nil)
 		return
 	}
 
 	err = file_store.Delete(userUUID, fileUUID)
 	if err != nil {
 		logger.Zap().Error(err.Error())
-		resp.SendResponse(c, http.StatusInternalServerError, resp.FileDeleteFailedCode, nil)
+		responseUtil.SendResponse(c, http.StatusInternalServerError, responseUtil.FileDeleteFailedCode, nil)
 		return
 	}
 
 	logger.Zap().Info(successDeleteFile, zap.Int64("fileUUID", fileUUID))
-	resp.SendResponse(c, http.StatusOK, resp.SuccessCode, nil)
+	responseUtil.SendResponse(c, http.StatusOK, responseUtil.SuccessCode, nil)
 }

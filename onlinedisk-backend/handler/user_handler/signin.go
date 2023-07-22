@@ -2,9 +2,10 @@ package user_handler
 
 import (
 	"net/http"
-	requestInfo "onlinedisk-backend/request_struct"
-	resp "onlinedisk-backend/response_builder"
 	"time"
+
+	requestUtil "github.com/coderc/onlinedisk-util/request"
+	responseUtil "github.com/coderc/onlinedisk-util/response"
 
 	"github.com/coderc/onlinedisk-util/mapper"
 
@@ -24,10 +25,10 @@ const (
 )
 
 func SigninHandler(c *gin.Context) {
-	var userInfo requestInfo.RequestUserInfo
+	var userInfo requestUtil.RequestUserInfo
 	if err := c.BindJSON(&userInfo); err != nil {
 		logger.Zap().Warn(errorGetUserInfo, zap.Error(err))
-		resp.SendResponse(c, http.StatusBadRequest, resp.SigninFailedCode, nil)
+		responseUtil.SendResponse(c, http.StatusBadRequest, responseUtil.SigninFailedCode, nil)
 		return
 	}
 
@@ -38,7 +39,7 @@ func SigninHandler(c *gin.Context) {
 	userModel, err := mapper.QueryUser(userInfo.Username, userInfo.Password)
 	if err != nil {
 		logger.Zap().Warn(err.Error(), zap.String("username", userInfo.Username))
-		resp.SendResponse(c, http.StatusBadRequest, resp.SigninFailedCode, nil)
+		responseUtil.SendResponse(c, http.StatusBadRequest, responseUtil.SigninFailedCode, nil)
 		return
 	}
 
@@ -46,13 +47,13 @@ func SigninHandler(c *gin.Context) {
 	token, err := jwt.CreateToken(userModel.UUID, time.Now().Add(24*60*60*time.Second).Unix())
 	if err != nil {
 		logger.Zap().Error(err.Error(), zap.String("username", userInfo.Username))
-		resp.SendResponse(c, http.StatusInternalServerError, resp.SigninFailedCode, nil)
+		responseUtil.SendResponse(c, http.StatusInternalServerError, responseUtil.SigninFailedCode, nil)
 		return
 	}
 
 	// 返回token
 	logger.Zap().Debug("signin success", zap.String("username", userInfo.Username))
-	resp.SendResponse(c, http.StatusOK, resp.SuccessCode, gin.H{
+	responseUtil.SendResponse(c, http.StatusOK, responseUtil.SuccessCode, gin.H{
 		"token":     token,
 		"userModel": userModel,
 	})

@@ -1,59 +1,51 @@
 package user_handler
 
 import (
+	"context"
 	"net/http"
-	requestInfo "onlinedisk-backend/request_struct"
-	resp "onlinedisk-backend/response_builder"
+
+	requestUtil "github.com/coderc/onlinedisk-util/request"
 
 	"github.com/coderc/onlinedisk-util/logger"
-	"github.com/coderc/onlinedisk-util/mapper"
-	"github.com/coderc/onlinedisk-util/snowflake"
-	"github.com/coderc/onlinedisk-util/utils"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+
+	userServiceConn "onlinedisk-backend/grpc/client"
+
+	userServicePb "github.com/coderc/onlinedisk-util/grpc/user_service_proto"
+
+	responseUtil "github.com/coderc/onlinedisk-util/response"
 )
 
 func SignupHandler(c *gin.Context) {
-	var userInfo requestInfo.RequestUserInfo
+	var userInfo requestUtil.RequestUserInfo
 	if err := c.BindJSON(&userInfo); err != nil {
 		logger.Zap().Warn(errorGetUserInfo, zap.Error(err))
-		resp.SendResponse(c, http.StatusBadRequest, resp.SignupFailedCode, nil)
+		responseUtil.SendResponse(c, http.StatusBadRequest, responseUtil.SignupFailedCode, nil)
 		return
 	}
 
-	// 判断用户名是否合法
-	if ok := checkUsername(userInfo.Username); !ok {
-		logger.Zap().Warn(errorUsernameInvalid, zap.String("username", userInfo.Username))
-		resp.SendResponse(c, http.StatusBadRequest, resp.SignupFailedCode, nil)
-		return
+	req := &userServicePb.UserSignUpRequest{
+		Username:        userInfo.Username,
+		Password:        userInfo.Password,
+		ConfirmPassword: userInfo.ConfirmPassword,
 	}
 
-	// 判断密码是否合法
-	if ok := checkPasswordInSignup(userInfo.Password, userInfo.ConfirmPassword); !ok {
-		logger.Zap().Warn(errorPasswordInvalidInSignup, zap.String("password", userInfo.Password), zap.String("confirmPassword", userInfo.ConfirmPassword))
-		resp.SendResponse(c, http.StatusBadRequest, resp.SignupFailedCode, nil)
-		return
-	}
-
-	// 对密码进行加密
-	userInfo.Password = utils.EncryptStrMD5(userInfo.Password)
-
-	// 生成 uuid
-	uuid, err := snowflake.GetId(1, 1)
+	conn := userServiceConn.GetConn()
+	userServiceClient := userServicePb.NewUserServiceClient(conn)
+	resp, err := userServiceClient.SignUp(context.Background(), req)
 	if err != nil {
-		logger.Zap().Error(errorCreateUUIDFailed, zap.Error(err))
-		resp.SendResponse(c, http.StatusInternalServerError, resp.SignupFailedCode, nil)
+		logger.Zap().Error(err.Error())
+		responseUtil.SendResponse(c, http.StatusInternalServerError, responseUtil.SignupFailedCode, nil)
 		return
 	}
 
-	// 保存用户信息
-	err = mapper.InsertUser(uuid, userInfo.Username, userInfo.Password)
-	if err != nil {
-		logger.Zap().Error(errorInsertUserInfoFailed, zap.Error(err))
-		resp.SendResponse(c, http.StatusInternalServerError, resp.SignupFailedCode, nil)
+	if resp.Code != 0 {
+		responseUtil.SendResponse(c, http.StatusForbidden, responseUtil.SignupFailedCode, nil)
 		return
 	}
-	resp.SendResponse(c, http.StatusOK, resp.SuccessCode, gin.H{
+
+	responseUtil.SendResponse(c, http.StatusOK, responseUtil.SuccessCode, gin.H{
 		"message": "注册成功",
 	})
 }

@@ -1,9 +1,10 @@
 package register
 
 import (
-	"google.golang.org/grpc"
-	pb "onlinedisk-user-service/grpc/user_service_proto"
 	"onlinedisk-user-service/handler"
+
+	pb "github.com/coderc/onlinedisk-util/grpc/user_service_proto"
+	"google.golang.org/grpc"
 )
 
 func Register(server *grpc.Server) {

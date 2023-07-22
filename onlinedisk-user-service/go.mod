@@ -2,14 +2,16 @@ module onlinedisk-user-service
 
 go 1.19
 
-//replace github.com/coderc/onlinedisk-util => ../../onlinedisk-util
+replace github.com/coderc/onlinedisk-util => ../../onlinedisk-util
 
 require (
-	github.com/coderc/onlinedisk-util v0.1.16
+	//github.com/coderc/onlinedisk-util v0.1.16
 	go.uber.org/zap v1.24.0
 	google.golang.org/grpc v1.56.2
 	google.golang.org/protobuf v1.31.0
 )
+
+require github.com/coderc/onlinedisk-util v0.0.0-00010101000000-000000000000
 
 require (
 	github.com/GUAIK-ORG/go-snowflake v0.0.0-20200116064823-220c4260e85f // indirect

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"onlinedisk-backend/router"
 
+	userServiceClient "onlinedisk-backend/grpc/client"
+
 	"github.com/coderc/onlinedisk-util/config"
 	"github.com/coderc/onlinedisk-util/db"
 	"github.com/coderc/onlinedisk-util/logger"
@@ -16,6 +18,7 @@ func Init() {
 	logger.GetLogger().Init(&config.GetConfig().LoggerConfig)
 	db.GetSingleton().Init(&config.GetConfig().DBConfig)
 	redis.Init(&config.GetConfig().RedisConfig)
+	userServiceClient.Init(&config.GetConfig().UserServiceConfig)
 }
 
 func main() {

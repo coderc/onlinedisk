@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"onlinedisk-backend/pkg/file_store"
-	resp "onlinedisk-backend/response_builder"
 	"strconv"
 
 	"github.com/coderc/onlinedisk-util/model"
@@ -20,15 +19,16 @@ import (
 	"github.com/coderc/onlinedisk-util/logger"
 	"github.com/gin-gonic/gin"
 
-	requestStruct "onlinedisk-backend/request_struct"
+	requestUtil "github.com/coderc/onlinedisk-util/request"
+	responseUtil "github.com/coderc/onlinedisk-util/response"
 )
 
 // FileUploadMultipleInitHandler 初始化分块上传
 func FileUploadMultipleInitHandler(c *gin.Context) {
-	var info requestStruct.MultipleInfo
+	var info requestUtil.MultipleInfo
 	if err := c.BindJSON(&info); err != nil {
 		logger.Zap().Error(err.Error())
-		resp.SendResponse(c, http.StatusBadRequest, resp.FileUploadMultipleInitFailedCode, nil)
+		responseUtil.SendResponse(c, http.StatusBadRequest, responseUtil.FileUploadMultipleInitFailedCode, nil)
 		return
 	}
 
@@ -43,7 +43,7 @@ func FileUploadMultipleInitHandler(c *gin.Context) {
 	)
 
 	logger.Zap().Info("upload multiple init success", zap.Any("info", info))
-	resp.SendResponse(c, http.StatusOK, resp.SuccessCode, nil)
+	responseUtil.SendResponse(c, http.StatusOK, responseUtil.SuccessCode, nil)
 }
 
 // FileUploadMultipleChunkHandler 上传单个分块
@@ -51,7 +51,7 @@ func FileUploadMultipleChunkHandler(c *gin.Context) {
 	fileHandler, err := c.FormFile("file")
 	if err != nil {
 		logger.Zap().Error(err.Error())
-		resp.SendResponse(c, http.StatusBadRequest, resp.FileUploadMultipleFailedCode, nil)
+		responseUtil.SendResponse(c, http.StatusBadRequest, responseUtil.FileUploadMultipleFailedCode, nil)
 		return
 	}
 
@@ -64,14 +64,14 @@ func FileUploadMultipleChunkHandler(c *gin.Context) {
 
 	if !utils.CheckStrsIsEmpty(uploadId, chunkSizeStr, currentChunk, fileName, fileSize, fileSHA1) {
 		logger.Zap().Error("params is invalid")
-		resp.SendResponse(c, http.StatusBadRequest, resp.FileUploadMultipleFailedCode, nil)
+		responseUtil.SendResponse(c, http.StatusBadRequest, responseUtil.FileUploadMultipleFailedCode, nil)
 		return
 	}
 
 	chunkSize, err := strconv.ParseInt(chunkSizeStr, 10, 64)
 	if err != nil {
 		logger.Zap().Error(err.Error())
-		resp.SendResponse(c, http.StatusBadRequest, resp.FileUploadMultipleFailedCode, nil)
+		responseUtil.SendResponse(c, http.StatusBadRequest, responseUtil.FileUploadMultipleFailedCode, nil)
 		return
 	}
 
@@ -79,7 +79,7 @@ func FileUploadMultipleChunkHandler(c *gin.Context) {
 	file, err := fileHandler.Open()
 	if err != nil {
 		logger.Zap().Error(err.Error())
-		resp.SendResponse(c, http.StatusBadRequest, resp.FileUploadMultipleFailedCode, nil)
+		responseUtil.SendResponse(c, http.StatusBadRequest, responseUtil.FileUploadMultipleFailedCode, nil)
 		return
 	}
 
@@ -89,7 +89,7 @@ func FileUploadMultipleChunkHandler(c *gin.Context) {
 	newFile, err := os.Create(filePath)
 	if err != nil {
 		logger.Zap().Error(err.Error())
-		resp.SendResponse(c, http.StatusBadRequest, resp.FileUploadMultipleFailedCode, nil)
+		responseUtil.SendResponse(c, http.StatusBadRequest, responseUtil.FileUploadMultipleFailedCode, nil)
 		return
 	}
 
@@ -105,7 +105,7 @@ func FileUploadMultipleChunkHandler(c *gin.Context) {
 	)
 
 	logger.Zap().Info("upload chunk success", zap.String("uploadId", uploadId), zap.String("currentChunk", currentChunk))
-	resp.SendResponse(c, http.StatusOK, resp.SuccessCode, nil)
+	responseUtil.SendResponse(c, http.StatusOK, responseUtil.SuccessCode, nil)
 }
 
 // FileUploadMultipleChunkCheckHandler 检查是否存在该chunk
@@ -120,27 +120,27 @@ func FileUploadMultipleChunkCheckHandler(c *gin.Context) {
 
 	if err != nil {
 		logger.Zap().Warn(err.Error())
-		resp.SendResponse(c, http.StatusForbidden, resp.FileUploadMultipleFailedCode, nil)
+		responseUtil.SendResponse(c, http.StatusForbidden, responseUtil.FileUploadMultipleFailedCode, nil)
 		return
 	}
 
 	if chunkNumInRedis == currentChunk { // 存在该chunk
 		logger.Zap().Info("chunk exist", zap.String("uploadId", uploadId), zap.String("currentChunk", currentChunk))
-		resp.SendResponse(c, http.StatusOK, resp.SuccessCode, nil)
+		responseUtil.SendResponse(c, http.StatusOK, responseUtil.SuccessCode, nil)
 		return
 	}
 
 	logger.Zap().Error("chunk not exist")
-	resp.SendResponse(c, http.StatusForbidden, resp.FileUploadMultipleNilChunkCode, nil)
+	responseUtil.SendResponse(c, http.StatusForbidden, responseUtil.FileUploadMultipleNilChunkCode, nil)
 	return
 }
 
 // FileUploadMultipleMergeHandler 合并分块 并删除redis数据, 上传db数据
 func FileUploadMultipleMergeHandler(c *gin.Context) {
-	var info requestStruct.MultipleInfo
+	var info requestUtil.MultipleInfo
 	if err := c.BindJSON(&info); err != nil {
 		logger.Zap().Error(err.Error())
-		resp.SendResponse(c, http.StatusBadRequest, resp.FileUploadMultipleInitFailedCode, nil)
+		responseUtil.SendResponse(c, http.StatusBadRequest, responseUtil.FileUploadMultipleInitFailedCode, nil)
 		return
 	}
 	userUUIDAny, _ := c.Get("uuid")
@@ -148,7 +148,7 @@ func FileUploadMultipleMergeHandler(c *gin.Context) {
 	fileUUID, err := snowflake.GetId(1, 1)
 	if err != nil {
 		logger.Zap().Error(err.Error())
-		resp.SendResponse(c, http.StatusInternalServerError, resp.FileUploadMultipleFailedCode, nil)
+		responseUtil.SendResponse(c, http.StatusInternalServerError, responseUtil.FileUploadMultipleFailedCode, nil)
 		return
 	}
 
@@ -156,7 +156,7 @@ func FileUploadMultipleMergeHandler(c *gin.Context) {
 	err = mergeChunk(uploadPath, info.UploadId, int(info.ChunkCount))
 	if err != nil {
 		logger.Zap().Error(err.Error())
-		resp.SendResponse(c, http.StatusInternalServerError, resp.FileUploadMultipleFailedCode, nil)
+		responseUtil.SendResponse(c, http.StatusInternalServerError, responseUtil.FileUploadMultipleFailedCode, nil)
 		return
 	}
 
@@ -181,12 +181,12 @@ func FileUploadMultipleMergeHandler(c *gin.Context) {
 	err = file_store.Upload(fileModel, userFileModel)
 	if err != nil {
 		logger.Zap().Error(err.Error())
-		resp.SendResponse(c, http.StatusInternalServerError, resp.FileUploadFailedCode, nil)
+		responseUtil.SendResponse(c, http.StatusInternalServerError, responseUtil.FileUploadFailedCode, nil)
 		return
 	}
 
 	logger.Zap().Info("multiple upload success", zap.String("uploadId", info.UploadId))
-	resp.SendResponse(c, http.StatusOK, resp.SuccessCode, nil)
+	responseUtil.SendResponse(c, http.StatusOK, responseUtil.SuccessCode, nil)
 }
 
 // mergeChunk 合并分块

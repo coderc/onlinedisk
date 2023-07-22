@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
+	"net"
+	"onlinedisk-user-service/register"
+
 	"github.com/coderc/onlinedisk-util/config"
 	"github.com/coderc/onlinedisk-util/db"
 	"github.com/coderc/onlinedisk-util/logger"
 	"google.golang.org/grpc"
-	"net"
-	"onlinedisk-user-service/register"
 )
 
 func Init() {

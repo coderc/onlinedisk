@@ -4,7 +4,8 @@ import (
 	"net/http"
 	"net/url"
 	"onlinedisk-backend/pkg/file_store"
-	resp "onlinedisk-backend/response_builder"
+
+	responseUtil "github.com/coderc/onlinedisk-util/response"
 
 	"github.com/coderc/onlinedisk-util/logger"
 	"github.com/gin-gonic/gin"
@@ -20,11 +21,11 @@ func FileSecondPassHandler(c *gin.Context) {
 	err := file_store.CheckSecondPass(sha1, fileName, userUUID)
 	if err != nil { // 秒传失败
 		logger.Zap().Error(err.Error())
-		resp.SendResponse(c, http.StatusInternalServerError, resp.FileUploadFailedCode, nil)
+		responseUtil.SendResponse(c, http.StatusInternalServerError, responseUtil.FileUploadFailedCode, nil)
 		return
 	}
 	// 秒传成功
 	logger.Zap().Info(successUploadFileChunk)
-	resp.SendResponse(c, http.StatusOK, resp.SuccessCode, nil)
+	responseUtil.SendResponse(c, http.StatusOK, responseUtil.SuccessCode, nil)
 	return
 }

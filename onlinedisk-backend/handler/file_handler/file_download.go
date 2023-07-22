@@ -5,10 +5,10 @@ import (
 	"onlinedisk-backend/pkg/file_store"
 	"strconv"
 
-	resp "onlinedisk-backend/response_builder"
-
 	"github.com/coderc/onlinedisk-util/logger"
 	"github.com/gin-gonic/gin"
+
+	responseUtil "github.com/coderc/onlinedisk-util/response"
 )
 
 // FileDownloadHandler 用户端下载文件
@@ -18,14 +18,14 @@ func FileDownloadHandler(c *gin.Context) {
 	fileUUID, err := strconv.ParseInt(fileUUIDStr, 10, 64)
 	if err != nil {
 		logger.Zap().Error(err.Error())
-		resp.SendResponse(c, http.StatusBadRequest, resp.FileDownloadFailedCode, nil)
+		responseUtil.SendResponse(c, http.StatusBadRequest, responseUtil.FileDownloadFailedCode, nil)
 		return
 	}
 
 	fileBytes, err := file_store.Download(fileUUID)
 	if err != nil {
 		logger.Zap().Error(err.Error())
-		resp.SendResponse(c, http.StatusInternalServerError, resp.FileDownloadFailedCode, nil)
+		responseUtil.SendResponse(c, http.StatusInternalServerError, responseUtil.FileDownloadFailedCode, nil)
 		return
 	}
 

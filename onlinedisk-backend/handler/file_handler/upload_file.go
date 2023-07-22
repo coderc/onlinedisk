@@ -4,8 +4,9 @@ import (
 	"io"
 	"net/http"
 	"onlinedisk-backend/pkg/file_store"
-	resp "onlinedisk-backend/response_builder"
 	"os"
+
+	response "github.com/coderc/onlinedisk-util/response"
 
 	"github.com/coderc/onlinedisk-util/logger"
 	"github.com/coderc/onlinedisk-util/model"
@@ -20,7 +21,7 @@ func FileUploadHandler(c *gin.Context) {
 	fileHeader, err := c.FormFile("file")
 	if err != nil {
 		logger.Zap().Error(errorReadFileFromRequest, zap.Error(err))
-		resp.SendResponse(c, http.StatusBadRequest, resp.FileUploadFailedCode, nil)
+		response.SendResponse(c, http.StatusBadRequest, response.FileUploadFailedCode, nil)
 		return
 	}
 
@@ -30,14 +31,14 @@ func FileUploadHandler(c *gin.Context) {
 	fileUUID, err := snowflake.GetId(1, 1)
 	if err != nil {
 		logger.Zap().Error(err.Error())
-		resp.SendResponse(c, http.StatusInternalServerError, resp.FileUploadFailedCode, nil)
+		response.SendResponse(c, http.StatusInternalServerError, response.FileUploadFailedCode, nil)
 		return
 	}
 
 	file, err := fileHeader.Open()
 	if err != nil {
 		logger.Zap().Error(errorOpenFile, zap.Error(err))
-		resp.SendResponse(c, http.StatusBadRequest, resp.FileUploadFailedCode, nil)
+		response.SendResponse(c, http.StatusBadRequest, response.FileUploadFailedCode, nil)
 		return
 	}
 
@@ -47,7 +48,7 @@ func FileUploadHandler(c *gin.Context) {
 	newFile, err := os.Create(filePath)
 	if err != nil {
 		logger.Zap().Error(errorCreateFile, zap.Error(err))
-		resp.SendResponse(c, http.StatusBadRequest, resp.FileUploadFailedCode, nil)
+		response.SendResponse(c, http.StatusBadRequest, response.FileUploadFailedCode, nil)
 		return
 	}
 
@@ -58,7 +59,7 @@ func FileUploadHandler(c *gin.Context) {
 	fileBytes, err := utils.GetFileBytes(filePath)
 	if err != nil {
 		logger.Zap().Error(err.Error())
-		resp.SendResponse(c, http.StatusInternalServerError, resp.FileUploadFailedCode, nil)
+		response.SendResponse(c, http.StatusInternalServerError, response.FileUploadFailedCode, nil)
 		return
 	}
 
@@ -67,7 +68,7 @@ func FileUploadHandler(c *gin.Context) {
 
 	if sha1Front != fileSHA1 { // 传输过程中文件被修改
 		logger.Zap().Error("file sha1 not equal", zap.String("sha1Front", sha1Front), zap.String("sha1Backend", fileSHA1))
-		resp.SendResponse(c, http.StatusBadRequest, resp.FileUploadFailedCode, nil)
+		response.SendResponse(c, http.StatusBadRequest, response.FileUploadFailedCode, nil)
 		return
 	}
 
@@ -89,10 +90,10 @@ func FileUploadHandler(c *gin.Context) {
 	err = file_store.Upload(fileModel, userFileModel)
 	if err != nil {
 		logger.Zap().Error(err.Error())
-		resp.SendResponse(c, http.StatusInternalServerError, resp.FileUploadFailedCode, nil)
+		response.SendResponse(c, http.StatusInternalServerError, response.FileUploadFailedCode, nil)
 		return
 	}
 
 	logger.Zap().Info(successUploadFile, zap.String("file", filePath))
-	resp.SendResponse(c, http.StatusOK, resp.SuccessCode, nil)
+	response.SendResponse(c, http.StatusOK, response.SuccessCode, nil)
 }
