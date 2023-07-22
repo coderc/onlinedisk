@@ -16,20 +16,14 @@ func Jwt() gin.HandlerFunc {
 			token = c.Query("token")
 		}
 		if token == "" {
-			c.JSON(http.StatusUnauthorized, nil)
-			return
+			c.AbortWithStatus(http.StatusUnauthorized)
 		}
 		uuid, deadline, err := jwt.ParseToken(token)
-		if err != nil {
-			c.JSON(http.StatusUnauthorized, nil)
-			return
+		if err != nil || deadline < time.Now().Unix() {
+			c.AbortWithStatus(http.StatusUnauthorized)
 		}
-		if deadline < time.Now().Unix() {
-			c.JSON(http.StatusUnauthorized, nil)
-			return
-		}
+
 		c.Set("uuid", uuid)
 		c.Next()
-		return
 	}
 }
