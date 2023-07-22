@@ -34,7 +34,12 @@ func (s *UserServiceServerImpl) SignIn(ctx context.Context, req *pb.UserSignInRe
 	// 返回token
 	logger.Zap().Debug("signin success", zap.String("username", req.Username))
 	return &pb.UserSignInResponse{
-		Code:  responseUtil.SccessCode,
-		Token: token,
+		Code:       responseUtil.SuccessCode,
+		Id:         userModel.Id,
+		Uuid:       userModel.UUID,
+		Username:   userModel.Username,
+		CreateTime: userModel.CreateTime,
+		UpdateTime: userModel.UpdateTime,
+		Token:      token,
 	}, nil
 }

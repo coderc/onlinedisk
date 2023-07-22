@@ -48,6 +48,6 @@ func (s *UserServiceServerImpl) SignUp(ctx context.Context, req *pb.UserSignUpRe
 	}
 
 	return &pb.UserSignUpResponse{
-		Code: responseUtil.SccessCode,
+		Code: responseUtil.SuccessCode,
 	}, nil
 }

@@ -24,5 +24,10 @@ message UserSignInRequest {
 
 message UserSignInResponse {
     int32 code = 1;
-    string token = 2;
+    int64 id = 2;
+    int64 uuid = 3;
+    string username = 4;
+    string create_time = 6;
+    string update_time = 7;
+    string token = 8;
 }
