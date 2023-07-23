@@ -31,3 +31,4 @@ config/
 github_token.txt
 
 file/
+config.yaml
