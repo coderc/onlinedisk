@@ -2,10 +2,11 @@ package oss_client
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/coderc/onlinedisk-util/logger"
+	"github.com/coderc/onlinedisk-util/mapper"
 	"github.com/coderc/onlinedisk-util/model"
 	rabbitmq "github.com/coderc/onlinedisk-util/rabbitmq"
 	"go.uber.org/zap"
@@ -23,25 +24,29 @@ func (o *OssClient) UploadFile(qName string) {
 			err := json.Unmarshal(msg, fileModel)
 			if err != nil {
 				logger.Zap().Error("oss client upload file: [" + string(msg) + "]")
-				fmt.Println("[error]: " + err.Error())
 			} else {
 				o.uploadFile(fileModel)
 			}
-			fmt.Println("oss client upload file: [" + string(msg) + "]")
 		}
 	}
 }
 
 func (o *OssClient) uploadFile(fileModel *model.FileModel) {
-	err := o.bucket.PutObjectFromFile(fileModel.SHA1, fileModel.Path)
+	defer os.Remove(fileModel.Path)
+	err := o.bucket.PutObjectFromFile(strconv.FormatInt(fileModel.UUID, 10), fileModel.Path)
 	if err != nil {
-		logger.Zap().Error(err.Error(), zap.String("fileSHA1", fileModel.SHA1))
-		fmt.Println("[error]: " + err.Error())
+		logger.Zap().Error(err.Error(), zap.Int64("fileUUID", fileModel.UUID))
+	} else {
+		logger.Zap().Debug("oss client upload file success", zap.Int64("fileUUID", fileModel.UUID))
 	}
 
-	// 删除本地文件
-	_ = os.Remove(fileModel.Path)
+	fileModel.Path = strconv.FormatInt(fileModel.UUID, 10)
 
 	// 更新数据库
-	// TODO
+	err = mapper.UpdateFilePath(fileModel)
+	if err != nil {
+		logger.Zap().Error(err.Error(), zap.Int64("fileUUID", fileModel.UUID))
+	} else {
+		logger.Zap().Debug("oss client update file path success", zap.Int64("fileUUID", fileModel.UUID))
+	}
 }

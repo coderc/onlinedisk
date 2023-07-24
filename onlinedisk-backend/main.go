@@ -14,7 +14,7 @@ import (
 	"github.com/coderc/onlinedisk-util/redis"
 	"github.com/gin-gonic/gin"
 
-	ossClient "onlinedisk-backend/oss_client"
+	ossClient "onlinedisk-backend/pkg/oss_client"
 )
 
 func Init() {

@@ -1,6 +1,7 @@
 package file_store
 
 import (
+	oss "onlinedisk-backend/pkg/oss_client"
 	"os"
 
 	"github.com/coderc/onlinedisk-util/mapper"
@@ -12,7 +13,12 @@ func Download(fileUUID int64) ([]byte, error) {
 		return nil, err
 	}
 
-	file, err := os.Open(fileModel.Path)
+	localPath, err := oss.GetClient().Download(fileUUID)
+	if err != nil {
+		return nil, err
+	}
+
+	file, err := os.Open(localPath)
 	if err != nil {
 		return nil, err
 	}

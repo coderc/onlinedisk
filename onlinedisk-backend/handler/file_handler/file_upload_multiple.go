@@ -2,6 +2,7 @@ package file_handler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/coderc/onlinedisk-util/model"
+	rabbitmq "github.com/coderc/onlinedisk-util/rabbitmq"
 	rdb "github.com/coderc/onlinedisk-util/redis"
 	"github.com/coderc/onlinedisk-util/snowflake"
 	"github.com/coderc/onlinedisk-util/utils"
@@ -185,6 +187,9 @@ func FileUploadMultipleMergeHandler(c *gin.Context) {
 		return
 	}
 
+	// 发送消息到rabbitmq
+	jsonBytes, _ := json.Marshal(fileModel)
+	_ = rabbitmq.Send("file-upload-oss", jsonBytes)
 	logger.Zap().Info("multiple upload success", zap.String("uploadId", info.UploadId))
 	responseUtil.SendResponse(c, http.StatusOK, responseUtil.SuccessCode, nil)
 }
