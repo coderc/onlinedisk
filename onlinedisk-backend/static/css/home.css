@@ -1,0 +1,102 @@
+body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background-color: #f6f8fa;
+    margin: 0;
+    padding: 0;
+    animation: fadeIn 1s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+h2 {
+    text-align: center;
+    margin-top: 40px;
+    color: #0366d6;
+    font-size: 28px;
+}
+
+h3 {
+    color: #0366d6;
+    font-size: 24px;
+    animation: fadeIn 1s ease-out;
+}
+
+span {
+    font-size: 18px;
+    color: #333;
+    margin: 10px 0;
+    animation: fadeIn 1s ease-out;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    animation: fadeIn 1s ease-out;
+}
+
+table, th, td {
+    border: 1px solid #d1d5da;
+}
+
+th, td {
+    padding: 10px;
+    text-align: left;
+}
+
+th {
+    background-color: #f1f8ff;
+}
+
+th:first-child,
+td:first-child {
+    border-left: none;
+}
+
+th:last-child,
+td:last-child {
+    border-right: none;
+}
+
+
+button {
+    background-color: #0366d6;
+    color: #ffffff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    animation: fadeInUp 1s ease-out;
+}
+
+button:hover {
+    background-color: #005cc5;
+}
+/* 
+input[type="file"] {
+    display: none;
+}
+  
+.custom-file-input-label {
+    display: inline-block;
+    padding: 7px 10px;
+    background-color: #4CAF50;
+    color: white;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.custom-file-input-label:hover {
+    background-color: #45a049;
+}
+
+input[type="file"]:focus + .custom-file-input-label {
+    border: 2px solid #4CAF50;
+} */

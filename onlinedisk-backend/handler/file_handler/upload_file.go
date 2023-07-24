@@ -8,12 +8,16 @@ import (
 
 	response "github.com/coderc/onlinedisk-util/response"
 
+	"encoding/json"
+
 	"github.com/coderc/onlinedisk-util/logger"
 	"github.com/coderc/onlinedisk-util/model"
 	"github.com/coderc/onlinedisk-util/snowflake"
 	"github.com/coderc/onlinedisk-util/utils"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+
+	rabbitmq "github.com/coderc/onlinedisk-util/rabbitmq"
 )
 
 // FileUploadHandler 用户端上传文件
@@ -92,6 +96,13 @@ func FileUploadHandler(c *gin.Context) {
 		logger.Zap().Error(err.Error())
 		response.SendResponse(c, http.StatusInternalServerError, response.FileUploadFailedCode, nil)
 		return
+	}
+
+	// 将消息发送到rabbitmq
+	jsonBytes, _ := json.Marshal(fileModel)
+	err = rabbitmq.Send("file-upload-oss", jsonBytes)
+	if err != nil {
+		logger.Zap().Error(err.Error())
 	}
 
 	logger.Zap().Info(successUploadFile, zap.String("file", filePath))

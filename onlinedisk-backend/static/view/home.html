@@ -10,27 +10,32 @@
     <!-- 引入crypto-js库 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
-    <!-- 引入index.css -->
-    <link rel="stylesheet" href="/static/css/index.css">
+    <!-- 引入home.css -->
+    <link rel="stylesheet" href="/static/css/home.css">
 </head>
 <body>
     <h2>home</h2>
     <!-- 展示用户信息 table -->
-    <h4>username:&nbsp;<span id="username">...</span></h4>
-    <h4>create_time:&nbsp;<span id="create_time">...</span></h4>
-    <h4>update_time:&nbsp;<span id="update_time">...</span></h4>
+    <span>用户名:&nbsp;<span id="username">...</span></span>&nbsp;&nbsp;
+    <span>创建时间:&nbsp;<span id="create_time">...</span></span>&nbsp;&nbsp;
+    <!-- <span>update_time:&nbsp;<span id="update_time">...</span></span> -->
 
     <form id="uploadForm" enctype="multipart/form-data">
-        <input id="uploadFile-01" type="file" name="file"><br/>
-        <input type="button" value="上传文件" onclick="upload()">
+        <label for="FileInput" class="custom-file-input-label">
+            <input id="uploadFile-01" id="FileInput" type="file" name="file">
+        </label>
+        <button type="button" onclick="upload()">上传文件</button>
     </form>
     <h4 id="uploading" style="color: red;"></h4>
 
     <h3>文件分段上传</h3>
-    <input type="file" id="multipartFileInput"><br/>
-    <button id="multipartUploadButton" onclick="multipartUpload()">分段上传</button>
-    <h4 id="multipartUploading" style="color: red;"></h4>
+        <label for="FileInput" class="custom-file-input-label">
+            <input type="file" id="multipartFileInput">
+        </label>
+        <button id="multipartUploadButton" onclick="multipartUpload()">分段上传</button>
 
+    <h4 id="multipartUploading" style="color: red;"></h4>
+    <button onclick="signOut()">登出</button>
     <table>
         <thead>
             <tr>
@@ -44,8 +49,6 @@
         </thead>
         <tbody id="fileList">
         </tbody>
-
-        <button style="position: fixed; bottom: 10px; left: 10px;" onclick="signOut()">登出</button>
     </table>
     <script>
         let userModel = {}
