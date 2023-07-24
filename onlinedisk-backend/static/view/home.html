@@ -106,7 +106,7 @@
             // 分段上传变量初始化
             multipartFileSize = file.size
             multipartFileName = file.name
-            multipartChunkSize = Math.ceil(multipartFileSize / 10)
+            multipartChunkSize = 1024 * 512 // 512KB
             multipartChunkCount = Math.ceil(multipartFileSize / multipartChunkSize)
             multipartCurrentChunk = 0
 
